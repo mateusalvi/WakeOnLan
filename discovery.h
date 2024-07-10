@@ -6,5 +6,7 @@
 #           Mateus Luiz Salvi - Bianca Pelegrini           #
 #        Davi Haas Rodrigues - Adilson Enio Pierog         #
 ##########################################################*/
+#include <sys/socket.h>
+
 
 #endif
