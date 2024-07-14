@@ -3,3 +3,5 @@
 #           Mateus Luiz Salvi - Bianca Pelegrini           #
 #        Davi Haas Rodrigues - Adilson Enio Pierog         #
 ##########################################################*/
+
+#include "discovery.h"

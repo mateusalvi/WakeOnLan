@@ -4,7 +4,8 @@
 #        Davi Haas Rodrigues - Adilson Enio Pierog       #
 ##########################################################
 
-wakeonlan.o: wakeonlan.c
-	gcc -o wakeonlan wakeonlan.c monitoring.h discovery.h management.h interface.h
+wakeonlan.o: wakeonlan.c monitoring.h discovery.h management.h interface.h
+	gcc wakeonlan.c -o wakeonlan monitoring.c discovery.c management.c interface.c -lpthread
+
 clean:
 	rm *.o wakeonlan

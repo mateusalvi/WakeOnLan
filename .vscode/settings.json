@@ -11,6 +11,9 @@
         "stdlib.h": "c",
         "signal.h": "c",
         "discovery.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "stdbool.h": "c",
+        "compare": "c",
+        "cstdint": "c"
     }
 }

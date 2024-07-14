@@ -7,4 +7,10 @@
 #        Davi Haas Rodrigues - Adilson Enio Pierog         #
 ##########################################################*/
 
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+void* ClientInputSubprocess();
+
 #endif
