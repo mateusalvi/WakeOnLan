@@ -3,14 +3,23 @@
 
 /*##########################################################
 # INF01151 - Sistemas Operacionais II N - Turma A (2024/1) #
-#           Mateus Luiz Salvi - Bianca Pelegrini           #
-#        Davi Haas Rodrigues - Adilson Enio Pierog         #
+#                    Mateus Luiz Salvi                     #
 ##########################################################*/
 
 #include <sys/socket.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <pthread.h>
+#include "constants.h"
+#include "monitoring.h"
 
-#define BROADCAST_PORT 20000
-#define MAXLEN 100 
+
+
+typedef struct __SleepMessageQueue
+{
+    char *message;
+    struct __SleepMessageQueue *nextMessage;
+} SleepMessageQueue;
 
 char* GetBroadcastAdress();
 
@@ -18,8 +27,10 @@ void* BroadcastSleep(char* broadcastAdress);
 
 static void Broadcast(const char *message);
 
-int ListenForSleepBroadcast();
+void* ListenForSleepBroadcast();
 
-void* ListenForSleepBroadcasts();
+int ListenForSleepBroadcasts(pthread_t *threads);
+
+void* SendMessage(char* _message, char* ip, int modifier);
 
 #endif

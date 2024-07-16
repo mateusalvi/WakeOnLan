@@ -1,7 +1,6 @@
 /*##########################################################
 # INF01151 - Sistemas Operacionais II N - Turma A (2024/1) #
-#           Mateus Luiz Salvi - Bianca Pelegrini           #
-#        Davi Haas Rodrigues - Adilson Enio Pierog         #
+#                    Mateus Luiz Salvi                     #
 ##########################################################*/
 
 #define _GNU_SOURCE     /* To get defns of NI_MAXSERV and NI_MAXHOST */
@@ -17,6 +16,7 @@
 #include <string.h>     /* strcasecmp() */
 #include <sys/ioctl.h>
 #include <net/if.h>
+
 
 //Subnet mask getter, thanks to https://stackoverflow.com/questions/18100761/obtaining-subnetmask-in-c
 int get_addr_and_netmask_using_ifaddrs(const char* ifa_name, 
@@ -130,7 +130,7 @@ void* BroadcastSleep(char* broadcastAdress)
     dest_addr.sin_addr.s_addr = inet_addr(broadcastAdress); // IP address of the destination (localhost in this case)
 
     // Prepare the data to send
-    char message[MAXLEN] = "SLEEP";
+    char message[MAX_MESSAGE_LEN] = "SLEEP";
     int message_len = strlen(message);
 
     // Send the message
@@ -144,21 +144,60 @@ void* BroadcastSleep(char* broadcastAdress)
     close(sockfd);
 }
 
-void* ListenForSleepBroadcasts()
+void* SendMessage(char* _message, char* ip, int modifier)
 {
-    while (1)
-    {
-        ListenForSleepBroadcast();
+    printf("Sending package to %s with message \"%s\"...\n", ip, _message);
+
+    int sockfd;
+    struct sockaddr_in dest_addr;
+
+    // Create socket for sending datagrams
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+        perror("Socket creation failed!\n");
+        exit(EXIT_FAILURE);
     }
-    
+
+    // Prepare the destination address structure
+    memset(&dest_addr, 0, sizeof(dest_addr));
+    dest_addr.sin_family = AF_INET;                 // IPv4
+    dest_addr.sin_port = htons(BROADCAST_PORT + modifier);               // Port number
+    dest_addr.sin_addr.s_addr = inet_addr(ip); // IP address of the destination (localhost in this case)
+
+    // Prepare the data to send
+    // char message[MAX_MESSAGE_LEN] = "SLEEPING";
+    char message[MAX_MESSAGE_LEN];
+    strcpy(message, _message);
+    int message_len = strlen(message);
+
+    // Send the message
+    if (sendto(sockfd, message, message_len, 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr)) == -1) {
+        perror("Sendto failed!\n");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Message sent successfully.\n");
+
+    close(sockfd);
 }
 
-int ListenForSleepBroadcast()
+int ListenForSleepBroadcasts(pthread_t *threads)
+{
+    int socketArg = 0;
+
+    pthread_create(&threads[THREAD_SERVER_SLEEP_SOCKET], NULL, ListenForSleepBroadcast, &socketArg);
+
+    pthread_join(threads[THREAD_SERVER_SLEEP_SOCKET], NULL);
+
+    //return ListenForSleepBroadcast();
+    return 0;
+}
+
+void* ListenForSleepBroadcast()
 {
     int sockfd;
     struct sockaddr_in my_addr, client_addr;
     socklen_t client_addr_len;
-    char buffer[MAXLEN];
+    char buffer[MAX_MESSAGE_LEN];
 
     // Create socket for receiving datagrams
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
@@ -180,15 +219,17 @@ int ListenForSleepBroadcast()
 
     printf("UDP server listening on port %d...\n", BROADCAST_PORT);
 
-    while (1) {
+    int shouldRun = 1;
+
+    while (shouldRun) {
         // Receive message from client
         client_addr_len = sizeof(client_addr);
-        int recv_len = recvfrom(sockfd, buffer, MAXLEN, 0, (struct sockaddr *)&client_addr, &client_addr_len);
+        int recv_len = recvfrom(sockfd, buffer, MAX_MESSAGE_LEN, 0, (struct sockaddr *)&client_addr, &client_addr_len);
         if (recv_len == -1) {
             perror("recvfrom failed");
             exit(EXIT_FAILURE);
         }
-
+        system("clear");
         // Print details of the client
         char client_ip[INET_ADDRSTRLEN];
         printf("Received packet from %s:%d\n", 
@@ -198,9 +239,13 @@ int ListenForSleepBroadcast()
         // Print received message
         buffer[recv_len] = '\0'; // Add null terminator to received data
         printf("Message: %s\n", buffer);
+
+        AddSleepingMachine(client_ip, "SLEEPING");
+        PrintAllMachines();
+        //shouldRun = 0;
     }
 
     close(sockfd); // Close the socket
 
-    return 0;
+    //return 0;
 }
