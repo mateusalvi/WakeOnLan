@@ -6,10 +6,6 @@
 #                    Mateus Luiz Salvi                     #
 ##########################################################*/
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 #include "constants.h"
 
 typedef struct __packet{
@@ -25,20 +21,24 @@ typedef struct __sleepingPC
     char* ip;
     char* mac;
     struct __sleepingPC* next;
+    int port;
+    char* lastMessage;
 } sleepingPC;
 
 void Listen();
 
-void AddSleepingMachine(char* ip, char* mac);
+void AddNewClient(char* ip, char* mac, char* message);
 
 sleepingPC* GetLastMachine(sleepingPC* root);
 
 sleepingPC* FindParentPC(char* ip, char* mac, sleepingPC rootSleepingPC);
 
-void PrintAllMachines();
+void PrintAllClients();
 
-void PrintLoop(sleepingPC* rootSleepingPC, int counter);
+void PrintClients(sleepingPC* rootSleepingPC, int counter);
 
-void WakePC(char* ip);
+void WakePC(sleepingPC* client);
+
+bool IsClientListInUse();
 
 #endif

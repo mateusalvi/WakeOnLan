@@ -16,6 +16,8 @@
         "compare": "c",
         "cstdint": "c",
         "system_error": "c",
-        "pthread.h": "c"
+        "pthread.h": "c",
+        "client.h": "c",
+        "constants.h": "c"
     }
 }

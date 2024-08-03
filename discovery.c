@@ -5,18 +5,6 @@
 
 #define _GNU_SOURCE     /* To get defns of NI_MAXSERV and NI_MAXHOST */
 #include "discovery.h"
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <ifaddrs.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <linux/if_link.h>
-#include <string.h>     /* strcasecmp() */
-#include <sys/ioctl.h>
-#include <net/if.h>
-
 
 //Subnet mask getter, thanks to https://stackoverflow.com/questions/18100761/obtaining-subnetmask-in-c
 int get_addr_and_netmask_using_ifaddrs(const char* ifa_name, 
@@ -144,7 +132,7 @@ void* BroadcastSleep(char* broadcastAdress)
     close(sockfd);
 }
 
-void* SendMessage(char* _message, char* ip, int modifier)
+void* SendMessage(char* _message, char* ip, int port)
 {
     printf("Sending package to %s with message \"%s\"...\n", ip, _message);
 
@@ -160,7 +148,7 @@ void* SendMessage(char* _message, char* ip, int modifier)
     // Prepare the destination address structure
     memset(&dest_addr, 0, sizeof(dest_addr));
     dest_addr.sin_family = AF_INET;                 // IPv4
-    dest_addr.sin_port = htons(BROADCAST_PORT + modifier);               // Port number
+    dest_addr.sin_port = htons(port);               // Port number
     dest_addr.sin_addr.s_addr = inet_addr(ip); // IP address of the destination (localhost in this case)
 
     // Prepare the data to send
@@ -240,8 +228,8 @@ void* ListenForSleepBroadcast()
         buffer[recv_len] = '\0'; // Add null terminator to received data
         printf("Message: %s\n", buffer);
 
-        AddSleepingMachine(client_ip, "SLEEPING");
-        PrintAllMachines();
+        AddNewClient(client_ip, " !!!MACADRESS PLACEHOLDER!!! ", buffer);
+        PrintAllClients();
         //shouldRun = 0;
     }
 

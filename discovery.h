@@ -6,14 +6,8 @@
 #                    Mateus Luiz Salvi                     #
 ##########################################################*/
 
-#include <sys/socket.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <pthread.h>
 #include "constants.h"
 #include "monitoring.h"
-
-
 
 typedef struct __SleepMessageQueue
 {
@@ -31,6 +25,6 @@ void* ListenForSleepBroadcast();
 
 int ListenForSleepBroadcasts(pthread_t *threads);
 
-void* SendMessage(char* _message, char* ip, int modifier);
+void* SendMessage(char* _message, char* ip, int port);
 
 #endif

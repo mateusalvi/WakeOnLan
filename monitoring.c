@@ -6,29 +6,34 @@
 #include "monitoring.h"
 #include "discovery.h"
 
-sleepingPC* _rootSleepingPC = NULL;
+sleepingPC* clientsList = NULL;
+pthread_mutex_t mutexLock;
 
-void AddSleepingMachine(char* ip, char* mac)
+void AddNewClient(char* ip, char* mac, char* message)
 {
     sleepingPC* newSleepingPC = malloc(sizeof(sleepingPC));
 
     newSleepingPC->ip = ip;
     newSleepingPC->mac = mac;
+    newSleepingPC->lastMessage = message;
 
-    if(_rootSleepingPC == NULL)
+    pthread_mutex_lock(&mutexLock);
+    if(clientsList == NULL)
     {
-       _rootSleepingPC = newSleepingPC;
+       clientsList = newSleepingPC;
     }
     else
     {
-        sleepingPC* lastPC = GetLastMachine(_rootSleepingPC);
+        sleepingPC* lastPC = GetLastMachine(clientsList);
         lastPC->next = newSleepingPC;
     }
+    pthread_mutex_unlock(&mutexLock);
 }
 
-void RemoveSleepingMachine(char* ip, char* mac)
+void RemoveClient(char* ip, char* mac)
 {
-    sleepingPC* parent = FindParentPC(ip, mac, *_rootSleepingPC);
+    pthread_mutex_lock(&mutexLock);
+    sleepingPC* parent = FindParentPC(ip, mac, *clientsList);
     if(parent->next->next != NULL)
     {
         sleepingPC* pcToRemove = parent->next;
@@ -40,15 +45,16 @@ void RemoveSleepingMachine(char* ip, char* mac)
         free(parent->next);
         parent->next = NULL;
     }
+    pthread_mutex_unlock(&mutexLock);
 }
 
 sleepingPC* FindParentPC(char* ip, char* mac, sleepingPC rootSleepingPC)
 {
-    if(_rootSleepingPC != NULL)
+    if(clientsList != NULL)
     {
-        if(_rootSleepingPC->next != NULL)
-            if(strcmp(_rootSleepingPC->next->ip, ip) == 0 && strcmp(_rootSleepingPC->next->mac, mac))
-                return _rootSleepingPC;
+        if(clientsList->next != NULL)
+            if(strcmp(clientsList->next->ip, ip) == 0 && strcmp(clientsList->next->mac, mac))
+                return clientsList;
     }
 
     return NULL;
@@ -62,23 +68,32 @@ sleepingPC* GetLastMachine(sleepingPC* root)
         return root;
 }
 
-void PrintAllMachines()
+void PrintAllClients()
 {
-    PrintLoop(_rootSleepingPC, 0);
+    PrintClients(clientsList, 0);
 }
 
-void PrintLoop(sleepingPC* rootSleepingPC, int counter)
+void PrintClients(sleepingPC* rootSleepingPC, int counter)
 {
     if(rootSleepingPC != NULL)
     {
-        printf("\n%d IP: %s   STATUS: %s \n", counter, rootSleepingPC->ip, rootSleepingPC->mac);
+        printf("\n%d IP: %s   STATUS: %s \n", counter, rootSleepingPC->ip, rootSleepingPC->lastMessage);
         if(rootSleepingPC->next != NULL)
-            PrintLoop(rootSleepingPC->next, counter++);
+            PrintClients(rootSleepingPC->next, counter++);
     }
 }
 
-void WakePC(char* ip)
+void WakePC(sleepingPC* client)
 {
-    printf("Sending wakeup signal to localhost");
-    SendMessage("RETORNO DO SERVIDOR", "127.0.0.1", 1);
+    printf("Sending wakeup signal to %s", client->ip);
+    char* magicPackage = "";
+
+    for (size_t i = 0; i < 16; i++)
+    {
+        strcat(magicPackage, client->mac);
+    }
+    
+    strcat(magicPackage, MAGIC_PACKAGE_SUFIX);
+
+    SendMessage(magicPackage, client->ip, client->port);
 }
